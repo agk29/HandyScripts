@@ -23,8 +23,8 @@ def newresolution_tiff(input_f, output_f='resample.tif', directory='', resolutio
         dest.write(resampled_array)
 
 
-# Modify the resolution of a dataset and output new dataset and data array, default is 0.5*resolution
-def resample_raster_dataset(raster, scale=0.5):
+# Modify the resolution of a dataset and output new dataset and data array
+def resample_raster_dataset(raster, scale):
     t = raster.transform
 
     # rescale the metadata
