@@ -14,3 +14,6 @@ Reads a .tif file and outputs a pyvista mesh file for plotting etc, and also sav
 
 ## import_json_colormap.py:
 Imports a .json colormap as a LinearSegmentedColormap object for use with matplotlib, pyvista etc. json colormap file can be exported from Paraview
+
+## crop_tif.py:
+Crops a tif file to a chosen size and saves as a new tif file. Handy for cropping one tif file to the size of another tif
