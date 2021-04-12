@@ -29,4 +29,4 @@ def merge_tiff(directory='', output_folder='', output_f='merged.tif'):
 # directory = 'C:/folder/subfolder'
 # output_folder = 'C:/folder'
 # output_f = 'test_merged.tif'
-# merge_tiff(directory, outputname)
+# merge_tiff(directory, output_folder, output_f)

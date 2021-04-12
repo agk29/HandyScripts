@@ -24,7 +24,7 @@ def read_raster_output_vtk(input_f, directory='', scale=1):
     zz = values.reshape(xx.shape) # will make z-comp the values in the file
     # zz = np.zeros_like(xx) # or this will make it flat
     mesh = pv.StructuredGrid(xx, yy, scale*zz)
-    mesh['data'] = values.ravel(order='F')
+    mesh['elevation'] = values.ravel(order='F')
     mesh = mesh.warp_by_scalar()
     mesh.save(os.path.splitext(filename)[0] + '_scale{}.vtk'.format(scale)) # save as a vtk file
     return mesh
