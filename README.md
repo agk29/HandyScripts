@@ -10,7 +10,8 @@ Merges a collection of .tif files located in a single directory, and outputs a n
 Modifies the resolution of a .tif file and creates a new .tif file. Can either upscale or downscale as needed. Useful for very large .tif files - reducing the resolution reduces the size by a significant amount
 
 ## crop_tif.py:
-Two functions: one obtains the coordinates of a tif file (optional: crop to a smaller size) and the other function saves a new tif with the chosen coordinates
+Two functions: one obtains the coordinates of a tif file (optional: crop to a smaller size) and the other function saves a new tif with the chosen coordinates.
+Handy for cropping one tif file to the size of another tif
 
 ## DEMtoVTK.py:
 Reads a .tif file and outputs a pyvista mesh file for plotting etc, and also saves a .vtk file for use in Paraview. Can scale the height up or down if needed.
