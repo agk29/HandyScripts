@@ -20,5 +20,8 @@ Can also import a satellite image (or other) to use as a texture file - saves th
 ## import_json_colormap.py:
 Imports a .json colormap as a LinearSegmentedColormap object for use with matplotlib, pyvista etc. json colormap file can be exported from Paraview
 
+## modToVtk.py:
+Several functions to convert modflow, modpath and mt3d output files to vtk for viewing. Does NOT work with modflow 6 or grids with uneven grid size (yet)
+
 ## flopy-edited folder:
 Edited scripts for flopy to allow for easy export to vtk 
