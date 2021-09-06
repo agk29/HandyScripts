@@ -75,13 +75,10 @@ def mt3d_to_vtk(input_folder, mf_namfile, ucn_file, output_folder, text='concent
 # mf_namfile = "ex01_mf2005.nam"
 # divider = 1
 # well_loc = (2,10,9) #[lay, row, col]
-def modpath_to_vtk(input_folder, pathline_file, endpoint_file, output_folder, output_file, output_file_pend, mf_namfile, divider=1, well_loc=None):
+def modpath_to_vtk(input_folder, pathline_file, endpoint_file, output_folder, output_file, output_file_pend, mf_namfile, output_file_pstart=None, divider=1, well_loc=None, plot=None, xoffset=0, yoffset=0, zoffset=0):
     
     if not os.path.exists(output_folder):
         os.makedirs(output_folder)
-    
-    ## Modflow data
-    mf = flopy.modflow.Modflow.load(mf_namfile, model_ws=input_folder)
 
     ## Pathline and endpoint data
     fpth = os.path.join(input_folder, pathline_file)  
@@ -96,7 +93,7 @@ def modpath_to_vtk(input_folder, pathline_file, endpoint_file, output_folder, ou
     points_end.SetNumberOfPoints(len(pend_all))
     i=0
     for point in pend_all:
-        points_end.SetPoint(i, point['x'], point['y'], point['z'])
+        points_end.SetPoint(i, point['x']+xoffset, point['y']+yoffset, point['z']+zoffset)
         i=i+1
     polygon = vtk.vtkPolyData()
     polygon.SetPoints(points_end)
@@ -106,8 +103,26 @@ def modpath_to_vtk(input_folder, pathline_file, endpoint_file, output_folder, ou
     writer.SetFileName(output_name)
     writer.Write()
     
+    # make a vtk of the start points
+    if output_file_pstart is not None:
+        points_start = vtk.vtkPoints()
+        points_start.SetNumberOfPoints(len(pend_all))
+        i=0
+        for path in pall:
+            startp = path[0]
+            points_start.SetPoint(i, startp['x']+xoffset, startp['y']+yoffset, startp['z']+zoffset)
+            i = i+1
+        polygon = vtk.vtkPolyData()
+        polygon.SetPoints(points_start)
+        writer = vtk.vtkPolyDataWriter()
+        writer.SetInputData(polygon)
+        output_name = os.path.join(output_folder, output_file_pstart)
+        writer.SetFileName(output_name)
+        writer.Write()
+    
     # If we want the pathlines that reach a well
     if well_loc is not None:
+        mf = flopy.modflow.Modflow.load(mf_namfile, model_ws=input_folder)
         well_loc = tuple(map(int, well_loc[1:-1].split(','))) # Convert from string to tuple
         nodew = mf.dis.get_node([well_loc])
         pall = p.get_destination_pathline_data(nodew)
@@ -128,7 +143,7 @@ def modpath_to_vtk(input_folder, pathline_file, endpoint_file, output_folder, ou
     for path in pall:
         lines.InsertNextCell(len(path))
         for point in path:
-            points.SetPoint(i, point['x'], point['y'], point['z'])
+            points.SetPoint(i, point['x']+xoffset, point['y']+yoffset, point['z']+zoffset)
             lines.InsertCellPoint(i)
             i += 1
     
@@ -141,17 +156,73 @@ def modpath_to_vtk(input_folder, pathline_file, endpoint_file, output_folder, ou
     output_name = os.path.join(output_folder, output_file)
     writer.SetFileName(output_name)
     writer.Write()
+    
+    with open(output_name, 'r+', encoding='Latin-1') as fout:
+        line = next(fout)
+        fout.seek(0)
+        fout.write(line.replace('5.1', '5.0'))
 
     # Quick 2D plot to check
-    mm = flopy.plot.PlotMapView(model=mf)
-    mm.plot_grid(lw=0.5)
-    if well_loc is not None:
-        label = 'captured by well'
-    else:
-        label = 'all pathlines'
-    mm.plot_pathline(pall, layer='all', color='blue', label=label)
-    # mm.plot_endpoint(ew, direction='starting', colorbar=True)
-    mm.ax.legend();
+    if plot is not None:
+            ## Modflow data
+        mf = flopy.modflow.Modflow.load(mf_namfile, model_ws=input_folder)
+        mm = flopy.plot.PlotMapView(model=mf)
+        mm.plot_grid(lw=0.5)
+        if well_loc is not None:
+            label = 'captured by well'
+        else:
+            label = 'all pathlines'
+        mm.plot_pathline(pall, layer='all', color='blue', label=label)
+        # mm.plot_endpoint(ew, direction='starting', colorbar=True)
+        mm.ax.legend();
+    
+    
+    
+    
+# Export a single pathline at each timestep for transient plotting in paraview   
+def modpath_to_vtk_timesteps(input_folder, pathline_file, output_folder, output_filename, xoffset=0, yoffset=0, zoffset=0):
+    
+    if not os.path.exists(output_folder):
+        os.makedirs(output_folder)
+
+    ## Pathline and endpoint data
+    fpth = os.path.join(input_folder, pathline_file)  
+    p = flopy.utils.PathlineFile(fpth)
+    pall = p.get_alldata()
+
+    # Create a separate vtk file for each timestep
+    print("{} max timesteps".format(len(pall[0])))
+    for j in range(1, len(pall[0])+1):
+        # Set up the vtk pathline file
+        points = vtk.vtkPoints()  
+        totalnumpoints = 0
+        for path in pall:
+            totalnumpoints += j
+        points.SetNumberOfPoints(totalnumpoints)
+        lines = vtk.vtkCellArray()
+    
+        # Add the points along the pathlines and make them into lines 
+        i=0
+        for path in pall:
+            lines.InsertNextCell(j)
+            for point in path[:j]:
+                points.SetPoint(i, point['x']+xoffset, point['y']+yoffset, point['z']+zoffset)
+                lines.InsertCellPoint(i)
+                i += 1
+        
+        # Save to file        
+        polygon = vtk.vtkPolyData()
+        polygon.SetPoints(points)
+        polygon.SetLines(lines)
+        writer = vtk.vtkPolyDataWriter()
+        writer.SetInputData(polygon)
+        output_name = os.path.join(output_folder, output_filename+"_"+str(j)+".vtk")
+        writer.SetFileName(output_name)
+        writer.Write()
+        with open(output_name, 'r+', encoding='Latin-1') as fout:
+            line = next(fout)
+            fout.seek(0)
+            fout.write(line.replace('5.1', '5.0'))
     
     
     
