@@ -106,7 +106,7 @@ def modpath_to_vtk(input_folder, pathline_file, endpoint_file, output_folder, ou
     # make a vtk of the start points
     if output_file_pstart is not None:
         points_start = vtk.vtkPoints()
-        points_start.SetNumberOfPoints(len(pend_all))
+        points_start.SetNumberOfPoints(len(pall))
         i=0
         for path in pall:
             startp = path[0]
